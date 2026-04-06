@@ -12,7 +12,6 @@ interface Data {
   todayKwh24v: number;
   todayKwh48v: number;
   temp: number | null;
-  weatherEmbed: string | null;
 }
 
 export const handler = {
@@ -28,7 +27,6 @@ export const handler = {
       todayKwh24v: state.todayKwh24v,
       todayKwh48v: state.todayKwh48v,
       temp: state.temp,
-      weatherEmbed: Deno.env.get("WENDY_WEATHER_EMBED") ?? null,
     } satisfies Data);
   },
 };
@@ -101,18 +99,6 @@ export default function Overlay(props: { data: Data }) {
         {/* Bottom row: charts */}
         <OverlayCharts />
 
-        {/* Weather strip (configurable via WENDY_WEATHER_EMBED) */}
-        {d.weatherEmbed && (
-          <div class="overlay-windy">
-            <iframe
-              width="100%"
-              height="100"
-              src={d.weatherEmbed}
-              frameBorder="0"
-              style="border:0;display:block;"
-            />
-          </div>
-        )}
       </div>
 
       {/* SSE updater for data panel + Chia poller */}

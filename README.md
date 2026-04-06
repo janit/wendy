@@ -33,15 +33,27 @@ Single-page 2x2 grid layout fitting one viewport:
 │   bat 48/24) │   48V shunt) │
 ├──────────────┴──────────────┤
 │  Voltage — 24h history      │
+├─────────────────────────────┤
+│  Wind forecast (Windy.com)  │
+│  -6h ← now → +42h          │
 └─────────────────────────────┘
 ```
 
 - Real-time streaming charts (canvas, 10-minute window, 1s resolution)
 - 24h voltage history chart at the bottom
+- Wind forecast strip powered by the [Windy.com](https://www.windy.com/) [Point Forecast API](https://api.windy.com/point-forecast) — 6h history + 42h ahead, color-coded wind speed/gust values and direction arrows
 - Live SSE updates for all values
 - Dynamic Y-axis scaling
 - Light/dark theme (follows system preference, overridable)
 - 24V/48V mode detection with hysteresis
+
+### Wind Forecast
+
+The dashboard includes a wind forecast strip powered by the [Windy.com Point Forecast API](https://api.windy.com/point-forecast). Thanks to [Windy.com](https://www.windy.com/) for providing an excellent weather data API.
+
+The forecast is fetched server-side once per hour — coordinates never reach the browser. The API returns GFS model data with wind u/v components and gust values, which are converted to speed, gust, and meteorological direction. The dashboard displays a columnar strip spanning 6 hours of history through 42 hours ahead, with color-coded wind speed and gust values, direction arrows, and the current time column highlighted.
+
+Set `WENDY_WINDY_API_KEY`, `WENDY_WINDY_LAT`, and `WENDY_WINDY_LON` to enable. The forecast strip is hidden when these are not configured.
 
 ### Stream Overlay (`/overlay`)
 
@@ -189,6 +201,9 @@ All config via environment variables (see `.env.example`):
 | `WENDY_GX_MODBUS_PORT` | `502` | GX Modbus port |
 | `WENDY_DB_PATH` | `./data/wendy.db` | SQLite database path (display/standalone) |
 | `WENDY_PORT` | `8086` | HTTP server port (display/standalone) |
+| `WENDY_WINDY_API_KEY` | — | [Windy.com](https://www.windy.com/) Point Forecast API key (display/standalone) |
+| `WENDY_WINDY_LAT` | — | Latitude for wind forecast |
+| `WENDY_WINDY_LON` | — | Longitude for wind forecast |
 
 ## Development
 
@@ -214,6 +229,7 @@ wendy/
 │   ├── ws-client.ts           # WebSocket client (source mode → upstream VPS)
 │   ├── types.ts               # Wire types for WebSocket messages
 │   ├── db.ts                  # SQLite schema, batched writes, queries
+│   ├── windy.ts               # Windy.com Point Forecast API poller (hourly)
 │   ├── float16.ts             # IEEE 754 half-precision decoder
 │   └── state.ts               # Shared state (globalThis bridge for bundled routes)
 ├── routes/
@@ -224,11 +240,13 @@ wendy/
 │       ├── ingest.ts           # WebSocket endpoint (display mode, receives from Pi)
 │       ├── recent.ts           # Ring buffer (last 10 min) for chart preload
 │       ├── history.ts          # 24h samples from SQLite
+│       ├── forecast.ts          # Wind forecast JSON (from Windy.com cache)
 │       ├── stats.ts            # Daily aggregates
 │       └── health.ts           # Health check (includes version hash)
 ├── islands/
 │   ├── StreamingCharts.tsx     # Canvas charts (power, voltage, current, 24h)
 │   ├── OverlayCharts.tsx       # Overlay charts (voltage + power, thick lines)
+│   ├── WindForecast.tsx        # Wind forecast strip (Windy.com data)
 │   └── ThemeToggle.tsx         # Light/dark switch
 └── scripts/
     ├── deploy.sh               # Build, smoke test, deploy, prune

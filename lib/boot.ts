@@ -5,6 +5,7 @@ import { startModbus } from "./modbus.ts";
 import { startVictronModbus } from "./victron-modbus.ts";
 import { startWsClient } from "./ws-client.ts";
 import { initState } from "./state.ts";
+import { startWindyPoller } from "./windy.ts";
 
 const FLUSH_INTERVAL_MS = 5000;
 const PRUNE_MAX_AGE_S = 86400; // 24h
@@ -34,6 +35,20 @@ export async function boot(): Promise<{ port: number; role: Role }> {
     console.log(`[db] opened ${DB_PATH}`);
 
     initState(db, bus);
+
+    // Start Windy wind forecast poller (hourly, server-side only)
+    const windyKey = Deno.env.get("WENDY_WINDY_API_KEY");
+    const windyLat = Deno.env.get("WENDY_WINDY_LAT");
+    const windyLon = Deno.env.get("WENDY_WINDY_LON");
+    if (windyKey && windyLat && windyLon) {
+      startWindyPoller({
+        apiKey: windyKey,
+        lat: parseFloat(windyLat),
+        lon: parseFloat(windyLon),
+      });
+    } else {
+      console.log("[boot] WENDY_WINDY_API_KEY/LAT/LON not set, skipping wind forecast");
+    }
 
     // Restore energy snapshots from DB
     const today = new Date().toISOString().slice(0, 10);

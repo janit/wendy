@@ -3,6 +3,7 @@ import { getBus } from "../lib/state.ts";
 import ThemeToggle from "../islands/ThemeToggle.tsx";
 import StreamingCharts from "../islands/StreamingCharts.tsx";
 import ChiaStatus from "../islands/ChiaStatus.tsx";
+import WindForecast from "../islands/WindForecast.tsx";
 
 interface Data {
   power: number | null;
@@ -83,6 +84,9 @@ export default function Glance(props: { data: Data }) {
 
       {/* Top-right + bottom: charts in 2x2 grid */}
       <StreamingCharts layout="grid" />
+
+      {/* Wind forecast chart */}
+      <WindForecast />
 
       {/* Theme toggle */}
       <div style="position: fixed; bottom: 12px; right: 12px; opacity: 0.3; z-index: 10;">
