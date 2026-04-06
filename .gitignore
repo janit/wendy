@@ -1,0 +1,12 @@
+*.db
+*.db-wal
+*.db-shm
+node_modules/
+.superpowers/
+_fresh/
+data/
+.env
+.env.*
+!.env.example
+!.claude/settings.json
+docs/

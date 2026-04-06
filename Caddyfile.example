@@ -1,0 +1,69 @@
+# Wendy dashboard reverse proxy
+# Deploy on your VPS in front of wendy running in display mode (WENDY_ROLE=display).
+# The Pi connects directly to port 8086 (authenticated via WENDY_SECRET).
+# Caddy handles public dashboard traffic only.
+#
+# Usage:
+#   1. Copy to your server's Caddy config
+#   2. Replace wendy.example.com with your domain
+#   3. caddy reload
+
+wendy.example.com {
+	encode gzip zstd
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	# ── Static assets: cache aggressively ──────────────────────────────────
+	# JS/CSS bundles have content hashes in filenames — safe to cache forever
+	@static {
+		path /assets/* /styles.css /favicon.svg
+	}
+	header @static Cache-Control "public, max-age=31536000, immutable"
+	reverse_proxy @static localhost:8086
+
+	# ── SSE stream: proxy with flush for real-time ─────────────────────────
+	@sse {
+		path /api/events
+	}
+	reverse_proxy @sse localhost:8086 {
+		flush_interval -1
+		transport http {
+			read_timeout 0
+		}
+	}
+
+	# ── Block ingest endpoint from public access ───────────────────────────
+	# Pi connects directly to port 8086 (authenticated via WENDY_SECRET), not through Caddy
+	@ingest {
+		path /api/ingest
+	}
+	respond @ingest 404
+
+	# ── API endpoints: short cache to reduce repeat hits ───────────────────
+	@api {
+		path /api/*
+		not path /api/events
+		not path /api/ingest
+	}
+	header @api Cache-Control "public, max-age=5"
+	reverse_proxy @api localhost:8086
+
+	# ── go2rtc stream proxy ────────────────────────────────────────────────
+	handle /api/stream.mp4* {
+		reverse_proxy localhost:1984 {
+			flush_interval -1
+			transport http {
+				read_timeout 0
+			}
+		}
+	}
+
+	# ── Pages: cache briefly ───────────────────────────────────────────────
+	reverse_proxy localhost:8086 {
+		header_down Cache-Control "public, max-age=10"
+	}
+}

@@ -1,0 +1,25 @@
+{
+  "tasks": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "serve": "deno run -A serve.ts",
+    "test": "deno test -A lib/"
+  },
+  "imports": {
+    "fresh": "jsr:@fresh/core@^2",
+    "fresh/runtime": "jsr:@fresh/core@^2/runtime",
+    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1",
+    "preact": "npm:preact@^10",
+    "preact/": "npm:preact@^10/",
+    "@preact/signals": "npm:@preact/signals@^2",
+    "@db/sqlite": "jsr:@db/sqlite@^0",
+    "@ymjacky/mqtt5": "jsr:@ymjacky/mqtt5@^0",
+    "modbus-serial": "npm:modbus-serial@^8",
+    "vite": "npm:vite@^7"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  },
+  "nodeModulesDir": "auto"
+}

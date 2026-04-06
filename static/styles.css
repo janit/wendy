@@ -1,0 +1,380 @@
+/* Theme variables */
+:root {
+  --bg: #0c0c0c;
+  --bg-card: #111;
+  --text-primary: #fff;
+  --text-secondary: #ccc;
+  --text-muted: #555;
+  --text-label: #444;
+  --border: #1a1a1a;
+  --accent-green: #4ade80;
+  --font: system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="light"] {
+  --bg: #fafafa;
+  --bg-card: #f0f0f0;
+  --text-primary: #111;
+  --text-secondary: #333;
+  --text-muted: #999;
+  --text-label: #999;
+  --border: #eee;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Grid layout (2x2: hero + 3 charts) ───────────────────────────────── */
+
+.glance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 3fr 3fr 1fr;
+  gap: 8px;
+  height: 100vh;
+  padding: 8px;
+}
+
+.chart-24h {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.glance-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.glance-mode {
+  font-size: 16px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.glance-mode-value {
+  color: var(--accent-green);
+}
+
+.glance-power {
+  font-size: 96px;
+  font-weight: 100;
+  line-height: 1;
+  letter-spacing: -3px;
+}
+
+.glance-power-unit {
+  font-size: 16px;
+  color: var(--text-label);
+  letter-spacing: 3px;
+  margin-top: 2px;
+}
+
+.glance-divider {
+  height: 1px;
+  width: 80px;
+  background: var(--border);
+  margin: 12px 0;
+}
+
+.glance-secondary {
+  display: flex;
+  gap: 20px;
+}
+
+.glance-stat-value {
+  font-size: 32px;
+  font-weight: 200;
+  color: var(--text-muted);
+}
+
+.glance-stat-label {
+  font-size: 13px;
+  color: var(--text-label);
+  letter-spacing: 1.5px;
+}
+
+.glance-charge-state {
+  margin-top: 10px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--text-label);
+}
+
+/* ── Charts ────────────────────────────────────────────────────────────── */
+
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.charts-grid {
+  display: contents;
+}
+
+.charts-grid .chart-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border-radius: 6px;
+  padding: 4px 8px 4px;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.chart-legend-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.chart-legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chart-legend-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.chart-legend-val {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+/* ── Theme toggle ──────────────────────────────────────────────────────── */
+
+.theme-toggle {
+  width: 24px;
+  height: 12px;
+  background: var(--bg-card);
+  border-radius: 99px;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  padding: 0;
+}
+
+.theme-toggle-knob {
+  width: 8px;
+  height: 8px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.2s;
+}
+
+[data-theme="light"] .theme-toggle-knob {
+  left: 14px;
+}
+
+/* ── Overlay (/overlay) ───────────────────────────────────────────────── */
+
+.overlay-root {
+  background: transparent !important;
+  font-family: "Arial Black", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+}
+
+.overlay-root,
+.overlay-root * {
+  --bg: transparent;
+  --bg-card: transparent;
+}
+
+.overlay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 5fr 3fr 2fr auto;
+  gap: 0;
+  width: 100vw;
+  height: 100vh;
+  max-height: calc(100vw / (16 / 9));
+  overflow: hidden;
+}
+
+.overlay-windy {
+  grid-column: 1 / -1;
+  height: 100px;
+  overflow: hidden;
+}
+
+.overlay-empty {
+  background: #FF00FF;
+}
+
+.overlay-panel {
+  padding: 16px;
+}
+
+.overlay-stats {
+  background: #FF00FF;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  -webkit-text-stroke: 3px black;
+  paint-order: stroke fill;
+  color: #fff;
+}
+
+.overlay-header {
+  font-size: 24px;
+  letter-spacing: 4px;
+  margin-bottom: 8px;
+}
+
+.overlay-dot {
+  margin: 0 8px;
+}
+
+.overlay-mode {
+  color: #4ade80;
+}
+
+.overlay-watts {
+  font-size: min(110px, 8vw);
+  line-height: 1;
+  letter-spacing: -3px;
+}
+
+.overlay-watts-unit {
+  font-size: 22px;
+  letter-spacing: 4px;
+  margin-top: 4px;
+}
+
+.overlay-info-row {
+  display: flex;
+  gap: min(24px, 1.5vw);
+  margin-top: min(16px, 1vh);
+  text-align: center;
+}
+
+.overlay-info-val {
+  font-size: min(34px, 2.5vw);
+}
+
+.overlay-info-label {
+  font-size: min(16px, 1.2vw);
+  letter-spacing: 1.5px;
+}
+
+.overlay-chart {
+  background: rgba(0, 0, 0, 0.99);
+  padding: 8px;
+}
+
+.overlay-chart-24h {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+/* ── Chia status ──────────────────────────────────────────────────────── */
+
+.chia-card {
+  text-align: center;
+}
+
+.chia-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--text-label);
+}
+
+.chia-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chia-sync {
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+.chia-stats {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+.chia-val {
+  display: block;
+  font-size: 18px;
+  font-weight: 200;
+  color: var(--text-muted);
+}
+
+.chia-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-label);
+  letter-spacing: 1.5px;
+}
+
+.chia-error {
+  font-size: 11px;
+  color: var(--text-label);
+  margin-top: 4px;
+}
+
+/* ── Mode badge ────────────────────────────────────────────────────────── */
+
+.mode-badge {
+  background: var(--bg-card);
+  color: var(--text-muted);
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
