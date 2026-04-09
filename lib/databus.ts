@@ -16,6 +16,7 @@ export interface MergedState {
   power: number | null;
   arrayVoltage: number | null;
   current: number | null;
+  tristarPower: number | null;     // TriStar power_out register (array-side)
   batteryVoltage: number | null;
   temp: number | null;
   chargeState: string | null;
@@ -36,6 +37,9 @@ export interface MergedState {
   peakPower: number;
   peakVoltage: number;
   lifetimeKwh: number;
+  // Cumulative charged-kWh counters (monotonic, from hardware shunts)
+  victronChargedKwh: number;
+  victron48vChargedKwh: number;
 }
 
 const MODE_UP_THRESHOLD = 52;
@@ -164,6 +168,7 @@ export class DataBus {
       power: this.victron48vPower,
       arrayVoltage: tristar?.voltage ?? null,
       current: tristar?.current ?? null,
+      tristarPower: tristar?.power ?? null,
       batteryVoltage: tristar?.batteryVoltage ?? null,
       temp: tristar?.temp ?? null,
       chargeState: tristar?.chargeState ?? null,
@@ -181,6 +186,8 @@ export class DataBus {
       peakPower: this.peakPower,
       peakVoltage: this.peakVoltage,
       lifetimeKwh: this.lifetimeKwh,
+      victronChargedKwh: this.victronChargedKwh,
+      victron48vChargedKwh: this.victron48vChargedKwh,
     };
   }
 

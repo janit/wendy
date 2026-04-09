@@ -175,7 +175,7 @@ fi
 # Stop ALL wendy containers (catches manually started ones too)
 # Keep containers around (don't rm) so rollback can restart them
 OLD_NAME=""
-for cid in $(docker ps -q -f "name=wendy"); do
+for cid in $(docker ps -q -f "name=^${IMAGE}-"); do
   name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's|^/||')
   info "Stopping $name"
   OLD_NAME="$name"

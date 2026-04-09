@@ -1,5 +1,14 @@
 import { assertEquals } from "jsr:@std/assert";
-import { createDb, insertSamples, getHistory, updateDailyStats, getDailyStats, pruneOldSamples } from "./db.ts";
+import {
+  createDb,
+  getDailyStats,
+  getHistory,
+  getOldestSampleDate,
+  getSamplesForDay,
+  insertSamples,
+  pruneOldSamples,
+  updateDailyStats,
+} from "./db.ts";
 import type { Sample } from "./db.ts";
 
 function testDb() {
@@ -71,5 +80,46 @@ Deno.test("pruneOldSamples - removes old data", () => {
   const rows = getHistory(db, 0, Math.floor(Date.now() / 1000) + 10);
   assertEquals(rows.length, 1);
   assertEquals(rows[0].power, 500);
+  db.close();
+});
+
+Deno.test("getSamplesForDay - returns samples within UTC day", () => {
+  const db = testDb();
+  // 2026-04-01 00:00:00 UTC
+  const dayStart = Math.floor(Date.UTC(2026, 3, 1) / 1000);
+  insertSamples(db, [
+    { ts: dayStart - 1,     source: "tristar", power: 1, voltage: 48, current: 0, temp: 20, mode: "48v" },
+    { ts: dayStart,         source: "tristar", power: 2, voltage: 48, current: 0, temp: 20, mode: "48v" },
+    { ts: dayStart + 86399, source: "tristar", power: 3, voltage: 48, current: 0, temp: 20, mode: "48v" },
+    { ts: dayStart + 86400, source: "tristar", power: 4, voltage: 48, current: 0, temp: 20, mode: "48v" },
+  ]);
+  const rows = getSamplesForDay(db, "2026-04-01");
+  assertEquals(rows.length, 2);
+  assertEquals(rows[0].power, 2);
+  assertEquals(rows[1].power, 3);
+  db.close();
+});
+
+Deno.test("getSamplesForDay - empty day returns empty array", () => {
+  const db = testDb();
+  assertEquals(getSamplesForDay(db, "2026-04-01"), []);
+  db.close();
+});
+
+Deno.test("getOldestSampleDate - null on empty db", () => {
+  const db = testDb();
+  assertEquals(getOldestSampleDate(db), null);
+  db.close();
+});
+
+Deno.test("getOldestSampleDate - returns earliest UTC date", () => {
+  const db = testDb();
+  const day1 = Math.floor(Date.UTC(2026, 3, 1) / 1000);
+  insertSamples(db, [
+    { ts: day1 + 86400,  source: "tristar", power: 1, voltage: 48, current: 0, temp: 20, mode: "48v" }, // 2026-04-02
+    { ts: day1,          source: "tristar", power: 2, voltage: 48, current: 0, temp: 20, mode: "48v" }, // 2026-04-01
+    { ts: day1 + 172800, source: "tristar", power: 3, voltage: 48, current: 0, temp: 20, mode: "48v" }, // 2026-04-03
+  ]);
+  assertEquals(getOldestSampleDate(db), "2026-04-01");
   db.close();
 });

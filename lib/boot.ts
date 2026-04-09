@@ -4,11 +4,14 @@ import { startMqtt } from "./mqtt.ts";
 import { startModbus } from "./modbus.ts";
 import { startVictronModbus } from "./victron-modbus.ts";
 import { startWsClient } from "./ws-client.ts";
-import { initState } from "./state.ts";
+import { initState, setArchiveDb } from "./state.ts";
 import { startWindyPoller } from "./windy.ts";
+import { createArchiveDb } from "./archive-db.ts";
+import { startArchiver } from "./archive.ts";
+import { startWendyDiskPruner } from "./disk-pruner.ts";
 
 const FLUSH_INTERVAL_MS = 5000;
-const PRUNE_MAX_AGE_S = 86400; // 24h
+const PRUNE_MAX_AGE_S = 604800; // 7 days (compressed archive holds older days)
 const PRUNE_INTERVAL_MS = 600_000; // 10 minutes
 
 export type Role = "source" | "display" | "standalone";
@@ -57,6 +60,43 @@ export async function boot(): Promise<{ port: number; role: Role }> {
     bus.restoreSnapshots(snap24v, snap48v);
     if (snap24v != null || snap48v != null) {
       console.log(`[boot] restored energy snapshots: 24v=${snap24v} 48v=${snap48v}`);
+    }
+
+    // Compressed archive of completed days (display/standalone only)
+    const ARCHIVE_DB_PATH = Deno.env.get("WENDY_ARCHIVE_DB_PATH") ?? "./data/wendy-archive.db";
+    const ARCHIVE_RETENTION_DAYS = parseInt(Deno.env.get("WENDY_ARCHIVE_RETENTION_DAYS") ?? "365");
+    try {
+      const archiveDb = createArchiveDb(ARCHIVE_DB_PATH);
+      archiveDb.exec("PRAGMA busy_timeout = 30000");  // wait up to 30s during VACUUM
+      console.log(`[archive] opened ${ARCHIVE_DB_PATH}`);
+      setArchiveDb(archiveDb);
+      startArchiver({
+        liveDb: db,
+        archiveDb,
+        retentionDays: ARCHIVE_RETENTION_DAYS,
+      });
+
+      const PRUNE_ENABLED = (Deno.env.get("WENDY_PRUNE_ENABLED") ?? "1") === "1";
+      const PRUNE_MIN_FREE_GB = parseFloat(Deno.env.get("WENDY_PRUNE_MIN_FREE_GB") ?? "10");
+      const PRUNE_MIN_RETENTION_DAYS = parseInt(Deno.env.get("WENDY_PRUNE_MIN_ARCHIVE_RETENTION_DAYS") ?? "30", 10);
+      const PRUNE_INTERVAL_MIN = parseInt(Deno.env.get("WENDY_PRUNE_CHECK_INTERVAL_MIN") ?? "360", 10);
+
+      if (PRUNE_ENABLED) {
+        console.log(
+          `[boot] starting archive disk pruner: minFreeGb=${PRUNE_MIN_FREE_GB}, ` +
+          `minArchiveRetentionDays=${PRUNE_MIN_RETENTION_DAYS}, intervalMin=${PRUNE_INTERVAL_MIN}`,
+        );
+        startWendyDiskPruner(archiveDb, ARCHIVE_DB_PATH, {
+          minFreeGb: PRUNE_MIN_FREE_GB,
+          minArchiveRetentionDays: PRUNE_MIN_RETENTION_DAYS,
+          checkIntervalMin: PRUNE_INTERVAL_MIN,
+          vacuumAfter: true,
+        });
+      } else {
+        console.log("[boot] archive disk pruner disabled via WENDY_PRUNE_ENABLED=0");
+      }
+    } catch (err) {
+      console.error("[archive] failed to start, continuing without archival:", err);
     }
 
     let lastPrune = 0;

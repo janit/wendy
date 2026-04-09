@@ -1,12 +1,21 @@
-# Wendy
+# Wendy — Wind & Solar Energy Dashboard (Deno + Raspberry Pi 5)
 
-Dashboard for a wind and solar hybrid energy system. An experimental twin axial flux wind turbine with dual battery banks (24V/48V) and solar panels power a Chia blockchain full node running on a Raspberry Pi 5.
+Wendy is an open-source **Deno Fresh** dashboard for off-grid renewable energy systems. It polls **Morningstar TriStar MPPT** and **Victron GX** hardware via **Modbus TCP** at 1 Hz, stores samples in **SQLite**, and streams live charts over SSE — running on a **Raspberry Pi 5**. Originally built to monitor an experimental twin axial-flux wind turbine with dual 24V/48V battery banks and solar panels powering a Chia blockchain full node.
 
 ![Wendy dashboard](wendy-260406.webp)
 
 The Chia node (Raspberry Pi 5) and a mobile router are powered via a [Linovision 5-port PoE switch](https://global.linovision.com/collections/poe-switches/products/5-ports-dc9-54v-input-full-gigabit-poe-switch-with-voltage-booster) with dual 24V/48V redundant input — 24V primary to use all wind yield directly without going through the battery. Wendy replaces Home Assistant with a focused, real-time monitoring interface for the energy system and optionally the Chia node status.
 
-Collects data from [Victron Energy](https://www.victronenergy.com/) and [Morningstar](https://www.morningstarcorp.com/) hardware via Modbus TCP, stores 24h of history in SQLite, and serves a live dashboard via [Deno Fresh](https://fresh.deno.dev/). Includes a transparent overlay mode (`/overlay`) for compositing real-time stats and charts over a live video stream using headless Chrome and ffmpeg. Supports split deployment: the Pi collects hardware data and forwards it over WebSocket to a VPS that runs the dashboard.
+Collects data from [Victron Energy](https://www.victronenergy.com/) and [Morningstar](https://www.morningstarcorp.com/) hardware via Modbus TCP, stores 7 days of full-resolution history in SQLite plus up to a year of compressed daily archives (`wendy-archive.db`, gzipped columnar blobs, ~250 MB/year), and serves a live dashboard via [Deno Fresh](https://fresh.deno.dev/). Includes a transparent overlay mode (`/overlay`) for compositing real-time stats and charts over a live video stream using headless Chrome and ffmpeg. Supports split deployment: the Pi collects hardware data and forwards it over WebSocket to a VPS that runs the dashboard.
+
+## Tech Stack
+
+- **Deno 2.x / Fresh 2 / TypeScript** — server and UI, single binary runtime
+- **SQLite** (`@db/sqlite`) — hot window + compressed daily archive
+- **Modbus TCP** — TriStar MPPT 600V and Victron GX (BMV-700, SmartShunt)
+- **Server-Sent Events** — live dashboard updates
+- **Docker** — bundled `Dockerfile` and `docker-compose.yml`
+- **Optional:** headless Chromium + ffmpeg for the video overlay mode, [Windy.com](https://www.windy.com/) Point Forecast API for wind forecast panel
 
 ## The Turbine
 
@@ -252,3 +261,15 @@ wendy/
     ├── deploy.sh               # Build, smoke test, deploy, prune
     └── scan-modbus.py          # Diagnostic: scan GX Modbus unit IDs
 ```
+
+## Related Projects
+
+- [**wendy-curves**](https://github.com/janit/wendy-curves) — companion
+  power-curve tuning tool for the TriStar MPPT controller. Consumes
+  Wendy's live SSE stream, keeps its own long-term archive, and helps
+  you find a better voltage→watts curve by scoring candidates against
+  the empirical p90 envelope of observed samples.
+
+## License
+
+MIT

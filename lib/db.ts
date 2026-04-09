@@ -123,3 +123,24 @@ export function pruneOldSamples(db: Database, maxAgeSeconds: number): void {
   const cutoff = Math.floor(Date.now() / 1000) - maxAgeSeconds;
   db.prepare("DELETE FROM samples WHERE ts < ?").run(cutoff);
 }
+
+function dayBounds(dateUtc: string): [number, number] {
+  const year = parseInt(dateUtc.slice(0, 4));
+  const month = parseInt(dateUtc.slice(5, 7)) - 1;
+  const day = parseInt(dateUtc.slice(8, 10));
+  const start = Math.floor(Date.UTC(year, month, day) / 1000);
+  return [start, start + 86400];
+}
+
+export function getSamplesForDay(db: Database, dateUtc: string): Sample[] {
+  const [start, end] = dayBounds(dateUtc);
+  return db.prepare(
+    "SELECT ts, source, power, voltage, current, temp, mode FROM samples WHERE ts >= ? AND ts < ? ORDER BY ts",
+  ).all<Sample>(start, end);
+}
+
+export function getOldestSampleDate(db: Database): string | null {
+  const row = db.prepare("SELECT MIN(ts) as minTs FROM samples").get<{ minTs: number | null }>();
+  if (!row || row.minTs == null) return null;
+  return new Date(row.minTs * 1000).toISOString().slice(0, 10);
+}
